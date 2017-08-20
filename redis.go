@@ -67,7 +67,7 @@ func (w *redisWorker) start() {
 				log.Println(err)
 			}
 
-			w.job.Perform(data)
+			w.job.Perform([]byte(data))
 			time.Sleep(time.Second * time.Duration(w.pollFreq))
 		}
 	}()
