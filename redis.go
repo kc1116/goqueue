@@ -1,6 +1,7 @@
 package goqueue
 
 import (
+	"bytes"
 	"log"
 	"time"
 
@@ -48,29 +49,19 @@ func (r *redis) addJob(j Job) {
 func (r *redis) Start() error {
 	err := r.connect()
 	if err != nil {
-		return err
+		panic(err)
 	}
 
-	for _, worker := range r.jobPool {
-		go func(worker redisWorker) {
-			worker.start()
-		}(worker)
-	}
-	return nil
-}
-
-func (w *redisWorker) start() {
 	go func() {
-		for {
-			data, err := w.Dequeue(w.job.GetQName())
-			if err != nil {
-				log.Println(err)
-			}
-
-			w.job.Perform([]byte(data))
-			time.Sleep(time.Second * time.Duration(w.pollFreq))
+		for _, w := range r.jobPool {
+			w.conn = r.conn
+			w.pollFreq = r.options.PollFreq
+			dispatch(worker(&w), r.options.NumWorkers)
 		}
+
+		select {}
 	}()
+	return nil
 }
 
 func (r *redis) connect() error {
@@ -83,28 +74,46 @@ func (r *redis) connect() error {
 	return nil
 }
 
+func (w *redisWorker) start() {
+	go func() {
+		for {
+			data, err := w.Dequeue(w.job.GetQName())
+			if err != nil {
+				log.Println(err.Error())
+				time.Sleep(time.Second * time.Duration(w.pollFreq))
+			} else {
+				w.job.Perform(data)
+				time.Sleep(time.Second * time.Duration(w.pollFreq))
+			}
+		}
+	}()
+}
+
+func (w *redisWorker) getQName() string {
+	return w.job.GetQName()
+}
+
 //Enqueue . . . add data to be processed to your queue
 func (r *redis) Enqueue(q string, p Payload) error {
 	encodedPayload := encodePayload(&p)
 	cmd := r.conn.LPush(q, encodedPayload)
-	result, err := cmd.Result()
+	_, err := cmd.Result()
 	if err != nil {
 		log.Fatalln(err)
 		return err
 	}
-	log.Println(result)
 	return nil
 }
 
 //DeQueue . . . add data to be processed to your queue
-func (w *redisWorker) Dequeue(q string) (string, error) {
+func (w *redisWorker) Dequeue(q string) ([]byte, error) {
 	cmd := w.conn.RPop(q)
 	result, err := cmd.Result()
 	if err != nil {
-		log.Fatalln(err)
-		return "", err
+		return nil, err
 	}
-	return result, nil
+	b := bytes.Trim([]byte(result), "\x00")
+	return b, nil
 }
 
 func encodePayload(p *Payload) []byte {
@@ -115,15 +124,37 @@ func encodePayload(p *Payload) []byte {
 	return b
 }
 
+func getOptions(options interface{}) Options {
+	switch v := options.(type) {
+	case Options:
+		return v
+	default:
+		o := Options{PollFreq: POLLFREQ, NumWorkers: NUMWORKERS}
+		return o
+	}
+}
+
+func wrapJobs(jobs ...Job) []redisWorker {
+	var redisWorkers []redisWorker
+	for _, j := range jobs {
+		redisWorkers = append(redisWorkers, redisWorker{job: j})
+	}
+	return redisWorkers
+}
+
 //Redis . . . creates a new goqueue app backed by redis
-func Redis(name string, connInfo RedisConn, options Options) (App, error) {
+func Redis(name string, connInfo RedisConn, options interface{}, j ...Job) (Application, error) {
 	var r *redis
+
+	jobs := wrapJobs(j...)
 
 	r = &redis{
 		name:     name,
 		connInfo: connInfo,
-		options:  options,
+		options:  getOptions(options),
+		jobPool:  jobs,
+		running:  false,
 	}
 
-	return App(r), nil
+	return Application(r), nil
 }

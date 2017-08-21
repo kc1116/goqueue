@@ -1,7 +1,10 @@
 package goqueue
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
+	"log"
 	"reflect"
 )
 
@@ -33,14 +36,50 @@ var (
 )
 
 func (j *job) Perform(data []byte) error {
+	payload, err := parsePayload(data)
+	if err != nil {
+		log.Println(err.Error())
+	}
 	fn := j.perform.(func(data []byte) error)
-	err := fn(data)
+	err = fn(payload.Data)
+	if err != nil {
+		panic(err)
+	}
 
-	return err
+	return nil
 }
 
 func (j *job) GetQName() string {
 	return j.queue
+}
+
+func parsePayload(data []byte) (Payload, error) {
+	reader := bufio.NewReader(bytes.NewReader(data))
+	pType, err := getPayloadType(reader)
+	if err != nil {
+		return Payload{}, err
+	}
+	return Payload{
+		PayloadType: pType,
+		Data:        data,
+	}, nil
+}
+
+func getPayloadType(reader *bufio.Reader) (payloadType, error) {
+	buff := make([]byte, 6)
+
+	_, err := reader.Read(buff)
+	if err != nil {
+		return payloadType{}, err
+	}
+
+	switch string(buff) {
+	case STRING.string:
+		return STRING, nil
+	default:
+		return payloadType{}, errors.New("Data encoded is an unsupported type")
+	}
+
 }
 
 //NewJob . . . creates a new Job

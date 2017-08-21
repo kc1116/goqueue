@@ -1,7 +1,7 @@
 package goqueue
 
-//App . . . goqueue app
-type App interface {
+//Application . . . goqueue Application
+type Application interface {
 	AddJob(j ...Job) error
 	Enqueue(q string, p Payload) error
 	GetAppName() string
@@ -13,3 +13,8 @@ type Options struct {
 	PollFreq   int
 	NumWorkers int
 }
+
+const (
+	POLLFREQ   = 10
+	NUMWORKERS = 3
+)
