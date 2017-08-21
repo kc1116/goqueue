@@ -58,21 +58,21 @@ Now in your main function create a new Goqueue job, redis connection info and cr
 
 Once you start your queue workers will be spawned in the background and start polling redis for data 
 
-You can specify polling frequency and number of workers for each job 
+You can specify polling (seconds) frequency and number of workers for each job 
 ```linux 
-    gq.Options{
-        PollFreq: 10 //seconds
-	    NumWorkers: 4
-    }
+gq.Options{
+    PollFreq: 10 
+    NumWorkers: 4
+}
 ```
 
 Enqueueing data is done by calling the Enqueue function on your created app 
 ```linux 
-    // Create a new goqueue payload specifying the type of data going on the queue and the actual data in byte form
-	payload := gq.Payload{PayloadType: gq.STRING, Data: []byte("some data")}
+// Create a new goqueue payload specifying the type of data going on the queue and the actual data in byte form
+payload := gq.Payload{PayloadType: gq.STRING, Data: []byte("some data")}
 
-    // Put new payload on your queue
-    app.Enqueue("villain-queue", payload)
+// Put new payload on your queue
+app.Enqueue("villain-queue", payload)
 ```
 
 This package is still in Developement so API may change
