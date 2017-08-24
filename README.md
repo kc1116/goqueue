@@ -75,4 +75,4 @@ payload := gq.Payload{PayloadType: gq.STRING, Data: []byte("some data")}
 app.Enqueue("villain-queue", payload)
 ```
 
-This package is still in Developement so API may change
+Please submit Feature Requests or tips to make this package even more useful

@@ -3,6 +3,7 @@ package goqueue
 import (
 	"bytes"
 	"log"
+	"os"
 	"time"
 
 	gr "github.com/go-redis/redis"
@@ -99,7 +100,7 @@ func (r *redis) Enqueue(q string, p Payload) error {
 	cmd := r.conn.LPush(q, encodedPayload)
 	_, err := cmd.Result()
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 		return err
 	}
 	return nil
@@ -157,4 +158,8 @@ func Redis(name string, connInfo RedisConn, options interface{}, j ...Job) (Appl
 	}
 
 	return Application(r), nil
+}
+
+func init() {
+	log.SetOutput(os.Stdout)
 }
