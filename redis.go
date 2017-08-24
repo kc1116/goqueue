@@ -9,7 +9,7 @@ import (
 	gr "github.com/go-redis/redis"
 )
 
-type redis struct {
+type Redis struct {
 	name     string
 	connInfo RedisConn
 	conn     *gr.Client
@@ -31,7 +31,7 @@ type redisWorker struct {
 	conn     *gr.Client
 }
 
-func (r *redis) AddJob(jobs ...Job) error {
+func (r *Redis) AddJob(jobs ...Job) error {
 	for _, job := range jobs {
 		r.addJob(job)
 	}
@@ -39,15 +39,15 @@ func (r *redis) AddJob(jobs ...Job) error {
 	return nil
 }
 
-func (r *redis) GetAppName() string {
+func (r *Redis) GetAppName() string {
 	return r.name
 }
 
-func (r *redis) addJob(j Job) {
+func (r *Redis) addJob(j Job) {
 	r.jobPool = append(r.jobPool, redisWorker{j, r.options.PollFreq, r.conn})
 }
 
-func (r *redis) Start() error {
+func (r *Redis) Start() error {
 	err := r.connect()
 	if err != nil {
 		panic(err)
@@ -65,7 +65,7 @@ func (r *redis) Start() error {
 	return nil
 }
 
-func (r *redis) connect() error {
+func (r *Redis) connect() error {
 	c := gr.NewClient(&gr.Options{Addr: r.connInfo.Host + ":" + r.connInfo.Port})
 	r.conn = c
 	_, err := r.conn.Ping().Result()
@@ -80,7 +80,7 @@ func (w *redisWorker) start() {
 		for {
 			data, err := w.Dequeue(w.job.GetQName())
 			if err != nil {
-				log.Println(err.Error())
+				//log.Println(err.Error())
 				time.Sleep(time.Second * time.Duration(w.pollFreq))
 			} else {
 				w.job.Perform(data)
@@ -95,7 +95,7 @@ func (w *redisWorker) getQName() string {
 }
 
 //Enqueue . . . add data to be processed to your queue
-func (r *redis) Enqueue(q string, p Payload) error {
+func (r *Redis) Enqueue(q string, p Payload) error {
 	encodedPayload := encodePayload(&p)
 	cmd := r.conn.LPush(q, encodedPayload)
 	_, err := cmd.Result()
@@ -144,12 +144,12 @@ func wrapJobs(jobs ...Job) []redisWorker {
 }
 
 //Redis . . . creates a new goqueue app backed by redis
-func Redis(name string, connInfo RedisConn, options interface{}, j ...Job) (Application, error) {
-	var r *redis
+func NewRedis(name string, connInfo RedisConn, options interface{}, j ...Job) (Application, error) {
+	var r *Redis
 
 	jobs := wrapJobs(j...)
 
-	r = &redis{
+	r = &Redis{
 		name:     name,
 		connInfo: connInfo,
 		options:  getOptions(options),

@@ -36,7 +36,7 @@ func main() {
 		app with default polling freq and number of workers for each job
 		pass all your jobs as the last parameter
 	*/
-	redisQ, err := gq.Redis("New App", connInfo, nil, printJob)
+	redisQ, err := gq.NewRedis("New App", connInfo, nil, printJob)
 	if err != nil {
 		panic(err)
 	}

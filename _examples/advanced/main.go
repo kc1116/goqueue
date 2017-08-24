@@ -42,6 +42,17 @@ func main() {
 
 	http.ListenAndServe(":8000", nil)
 
+	/*
+		Here is a curl example you can use, open up another terminal and paste
+
+			curl -i \
+				-H "Accept: application/json" \
+				-H "X-HTTP-Method-Override: PUT" \
+				-X POST -d "data":"sign me please" \
+				http://localhost:8000/sign
+
+		and then watch your workers do work
+	*/
 }
 
 func signingHandler(w http.ResponseWriter, r *http.Request) {
