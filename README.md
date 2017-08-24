@@ -10,7 +10,7 @@ in the background with and poll your queue looking for data. When data is found 
 
 ## Overview 
 Goqueue Jobs are simple functions that conform to the func() definition for Job on the Application interface
-```linux
+```go
     //define a simple job function 
     func printStrings(data []byte) error {
         var err error
@@ -21,7 +21,7 @@ Goqueue Jobs are simple functions that conform to the func() definition for Job 
 
 Now in your main function create a new Goqueue job, redis connection info and create a new app 
 
-```linux
+```go
     func main(){
         // Setup redis connection info
         connInfo := gq.RedisConn{
@@ -59,7 +59,7 @@ Now in your main function create a new Goqueue job, redis connection info and cr
 Once you start your queue workers will be spawned in the background and start polling redis for data 
 
 You can specify polling (seconds) frequency and number of workers for each job 
-```linux 
+```go 
 gq.Options{
     PollFreq: 10 
     NumWorkers: 4
@@ -67,7 +67,7 @@ gq.Options{
 ```
 
 Enqueueing data is done by calling the Enqueue function on your created app 
-```linux 
+```go 
 // Create a new goqueue payload specifying the type of data going on the queue and the actual data in byte form
 payload := gq.Payload{PayloadType: gq.STRING, Data: []byte("some data")}
 
