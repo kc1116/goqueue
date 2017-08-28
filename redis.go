@@ -6,29 +6,44 @@ import (
 	"os"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	gr "github.com/go-redis/redis"
 )
 
 type Redis struct {
 	name     string
 	connInfo RedisConn
-	conn     *gr.Client
+	conn     gr.UniversalClient
 	jobPool  []redisWorker
 	options  Options
 	running  bool
 }
 
 //RedisConn . . . redis connection info
-type RedisConn struct {
-	Host     string `json:"host"`
-	Port     string `json:"port"`
-	ConnType string `json:"connType"`
+type RedisConn gr.UniversalOptions
+
+type connInfo struct {
+	Addrs              []string      `toml:"addresses"`
+	MasterName         string        `toml:"master_name"`
+	DB                 int           `toml:"db"`
+	ReadOnly           bool          `toml:"read_only"`
+	MaxRedirects       int           `toml:"max_redirects"`
+	RouteByLatency     bool          `toml:"route_by_latency"`
+	MaxRetries         int           `toml:"max_retries"`
+	Password           string        `toml:"password"`
+	DialTimeout        time.Duration `toml:"dial_timeout"`
+	ReadTimeout        time.Duration `toml:"read_timeout"`
+	WriteTimeout       time.Duration `toml:"write_timeout"`
+	PoolSize           int           `toml:"pool_size"`
+	PoolTimeout        time.Duration `toml:"pool_timeout"`
+	IdleTimeout        time.Duration `toml:"idle_timeout"`
+	IdleCheckFrequency time.Duration `toml:"idle_check_frequency"`
 }
 
 type redisWorker struct {
 	job      Job
 	pollFreq int
-	conn     *gr.Client
+	conn     gr.UniversalClient
 }
 
 func (r *Redis) AddJob(jobs ...Job) error {
@@ -53,7 +68,7 @@ func (r *Redis) Start() error {
 		panic(err)
 	}
 
-	go func() {
+	/*go func() {
 		for _, w := range r.jobPool {
 			w.conn = r.conn
 			w.pollFreq = r.options.PollFreq
@@ -61,17 +76,21 @@ func (r *Redis) Start() error {
 		}
 
 		select {}
-	}()
+	}()*/
 	return nil
 }
 
 func (r *Redis) connect() error {
-	c := gr.NewClient(&gr.Options{Addr: r.connInfo.Host + ":" + r.connInfo.Port})
+	opts := (gr.UniversalOptions)(r.connInfo)
+	c := gr.NewUniversalClient(&opts)
 	r.conn = c
 	_, err := r.conn.Ping().Result()
 	if err != nil {
 		return err
 	}
+	s := r.conn.ClusterInfo()
+	re, _ := s.Result()
+	log.Println(re, "\n\n\n")
 	return nil
 }
 
@@ -143,7 +162,16 @@ func wrapJobs(jobs ...Job) []redisWorker {
 	return redisWorkers
 }
 
-//Redis . . . creates a new goqueue app backed by redis
+func parseConf(path string) RedisConn {
+	var rConn RedisConn
+	if _, err := toml.DecodeFile(path, &rConn); err != nil {
+		panic(err)
+	}
+
+	return rConn
+}
+
+//NewRedis . . . creates a new goqueue app backed by redis
 func NewRedis(name string, connInfo RedisConn, options interface{}, j ...Job) (Application, error) {
 	var r *Redis
 

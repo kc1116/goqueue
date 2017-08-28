@@ -17,9 +17,7 @@ func main() {
 
 	// Setup redis connection info
 	connInfo := gq.RedisConn{
-		Host:     "127.0.0.1",
-		Port:     "6379",
-		ConnType: "tcp",
+		Addrs: []string{"127.0.0.1:7000", "127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003", "127.0.0.1:7004", "127.0.0.1:7005"},
 	}
 
 	/*	Create a new goqueue job, first param is the name of the queue that will be used for reading
