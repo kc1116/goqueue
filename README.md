@@ -23,12 +23,11 @@ Now in your main function create a new Goqueue job, redis connection info and cr
 
 ```go
     func main(){
-        // Setup redis connection info
-        connInfo := gq.RedisConn{
-            Host:     "127.0.0.1",
-            Port:     "6379",
-            ConnType: "tcp",
-        }
+    
+    // Setup redis connection info, more than one address for a redis cluster 
+	connInfo := gq.RedisConn{
+		Addrs: []string{"127.0.0.1:7000", "127.0.0.1:7001", "127.0.0.1:7002", "127.0.0.1:7003", "127.0.0.1:7004","127.0.0.1:7005"},
+	}
 
         /*	Create a new goqueue job, first param is the name of the queue that will be used for reading
             second param is the function that will be called when reading from this queue
