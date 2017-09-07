@@ -1,4 +1,7 @@
-# Goqueue
+
+# Goqueue 
+![alt text](https://user-images.githubusercontent.com/11549552/30172808-d1afedfa-93c3-11e7-8fb1-6d46007c4bb7.jpg)
+
 Goqueue is a minimalistic worker-job queue for your go apps heavily inspired by githubs [Resqueue](https://github.com/resque/resque) for ruby apps. 
 In Goqueue Jobs are simple functions that receive data in []byte form and return an error. These Job functions are attached to Workers, Workers are spawned 
 in the background with and poll your queue looking for data. When data is found it performs your Job function on that data.
