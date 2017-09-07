@@ -1,4 +1,4 @@
-<img align="right" src="https://user-images.githubusercontent.com/11549552/30172808-d1afedfa-93c3-11e7-8fb1-6d46007c4bb7.jpg" height="375px" border="0"/>
+<img align="right" src="https://user-images.githubusercontent.com/11549552/30172808-d1afedfa-93c3-11e7-8fb1-6d46007c4bb7.jpg" height="425px" border="0"/>
 
 # Goqueue 
 Goqueue is a minimalistic worker-job queue for your go apps heavily inspired by githubs [Resqueue](https://github.com/resque/resque) for ruby apps. 
